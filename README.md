@@ -14,18 +14,18 @@
 <br>
 <h3>Pushups Demo:-
 <br />
-<img align="center" src="https://github.com/shreyanshsatvik/personal-trainer/blob/main/Gif/pushups.gif"  />
+<img align="center" src=  />
 <br>
 Squats Live Demo :-
 <br>
-<img align="center" src="https://github.com/shreyanshsatvik/personal-trainer/blob/main/Gif/squats.gif"  />
+<img align="center" src= />
 <br />
 Crunches Demo :- 
 <br />
-<img align ="center" src="https://github.com/shreyanshsatvik/personal-trainer/blob/main/Gif/crunches.gif" />
+<img align ="center" src= />
 <br />
  </h3>
 
 **Made with :heart:** 
-              **-BiraVirus** 
+              **phycoding** 
 
