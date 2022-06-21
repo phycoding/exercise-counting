@@ -6,15 +6,18 @@ from weight_lifting import biceps
 import streamlit as st 
 import cv2
 import mediapipe as mp
-import posemodule as pm
+import PoseModule1 as pm
+import numpy as np
 import time
 import math
 import os
+dir = 0
 
+pTime = 0
 
+detector = pm.poseDetector()
 squat_path = os.path.dirname(os.path.realpath(__file__))+'/videos/'+'squats3.mp4'
-pushup_path = os.path.dirname(os.path.realpath(__file__))+'/videos/'+'pushup1.mp4'
-pullup_path = os.path.dirname(os.path.realpath(__file__))+'/videos/'+'pullup1.mp4'
+pushup_path = os.path.dirname(os.path.realpath(__file__))+'/videos/'+'pushup2.mp4'
 biceps_path = os.path.dirname(os.path.realpath(__file__))+'/videos/'+'weight lifting 1.mp4'
 
 st.set_page_config(
@@ -33,117 +36,136 @@ if check_box == True:
         st.video(squat_path)
     if video == "Pushups":
         st.video(pushup_path)
-    if video == "Pullups":
-        st.video(pullup_path)
     if video == "Biceps":
         st.video(biceps_path)
     st.warning("Please UNTICK the checkbox before starting the exercise")
 status_text = st.empty()
 place_holder = st.empty()
 
+count = 0
 calories = 0
-pullup_counts = 0
-pullup_calories = 0
-pushup_counts = 0
-pushup_calories = 0
-weightlift_counts = 0
-weightlift_calories = 0
-squat_counts = 0
-squat_calories = 0
+pTime = 0
+dir = 0
+color = (255, 0, 255)
 
-#video capturing
-cap = cv2.VideoCapture(0)
-exercise = st.sidebar.selectbox("Select Your Exercise", ["Pullup", "Pushup", "Squat","Weight Lifting"])
+
+exercise_list =  ["Pushup", "Squat","Curl"]
+exercise = st.sidebar.selectbox("Select Your Exercise", exercise_list)
+
+def img_fun(img):
+    #img = cv2.resize(img, (1280, 720))
+    #img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    img = detector.findPose(img, False)
+    lmList = detector.findPosition(img, False)
+    return img, lmList
+
+def exercise_counts(img,per,bar):
+        global count, calories, pTime,color,dir
+        img = cv2.resize(img, (1280, 720))
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img = detector.findPose(img, False)
+        lmList = detector.findPosition(img, False)
+        if len(lmList) != 0:
+            color = (255, 0, 255)
+            if per == 100:
+                color = (0, 255, 0)
+                if dir == 0:
+                    count += 0.5
+                    dir = 1
+            if per == 0:
+                color = (0, 255, 0)
+                if dir == 1:
+                    count += 0.5
+                    dir = 0
+        cv2.rectangle(img, (1100, 100), (1175, 650), color, 3)
+        cv2.rectangle(img, (1100, int(bar)), (1175, 650), color, cv2.FILLED)
+        cv2.putText(img, f'{int(per)} %', (1100, 75), cv2.FONT_HERSHEY_PLAIN, 4,
+                    color, 4)
+
+        # Draw Curl Count
+        #cv2.rectangle(img, (0, 450), (250, 720), (0, 255, 0), cv2.FILLED)
+        #cv2.putText(img, str(int(count)), (45, 670), cv2.FONT_HERSHEY_PLAIN, 15,
+                    #(255, 0, 0), 25)
+        cTime = time.time()
+        #fps = 1 / (cTime - pTime)
+        #pTime = cTime
+        #cv2.putText(img, str(int(fps)), (50, 100), cv2.FONT_HERSHEY_PLAIN, 5,
+                #(255, 0, 0), 5)
+        return img, count
+
+
 
 #Live Dashboard
 # create three columns
 placeholder = st.empty()
+def dashboard(count,calories,label1,label2):
+    with placeholder.container():
+                kpi1, kpi2 = st.columns(2)
+            # fill in those three columns with respective metrics or KPIs
+                kpi1.metric(
+                    label=label1,
+                    value=round(count, 2),
+                    delta=round(count)+1,
+                    )
+
+                kpi2.metric(
+                    label=label2,
+                    value=int(calories),
+                    delta= calories,
+                    )
 
 if st.button('Exercise'):
-    if exercise == "Pullup":
+    if exercise == "Pushup":
+        cap = cv2.VideoCapture(pushup_path)
+        while True:
+         _, img = cap.read()
+         
+        # Right Arm
+         img1,lmList = img_fun(img)
+         angle = detector.findAngle(img1, 12, 14, 16)
+            # # Left Arm
+         angle = detector.findAngle(img1, 11, 13, 15)
+
+            # print(angle, per)
+            # legs
+         angle = detector.findAngle(img1, 24, 26, 28)
+         angle = detector.findAngle(img1, 23, 25, 27)
+
+            # # Left Arm
+         angle = detector.findAngle(img1, 11, 13, 15)
+         per = np.interp(angle, (60, 130), (0, 100))
+         bar = np.interp(angle, (60, 130), (650, 100))
+         img, pushup_count = exercise_counts(img, per, bar)
+         FRAME_WINDOW.image(img)
+         dashboard(pushup_count,calories,"Pushup Count","Calories Burned")
+         
+    if exercise == "Squat":
+      cap = cv2.VideoCapture(squat_path)
+      while True:
+        _, img = cap.read()
+        img1,lmList = img_fun(img)
+        angle = detector.findAngle(img1, 12, 24, 28)
+        per = np.interp(angle, (100, 170), (0, 100))
+        bar = np.interp(angle, (100, 170), (650, 100))
+        img, squat_count = exercise_counts(img, per, bar)
+        FRAME_WINDOW.image(img)
+        dashboard(squat_count,calories,"Squat Count","Calories Burned")
+
+    if exercise == "Curl":
+        cap = cv2.VideoCapture(biceps_path)
         while True:
             img = cap.read()[1]
-            pullup_img, pullup_count, pullup_calorie = pullup(FRAME_WINDOW,img)
-            pullup_counts = pullup_counts + pullup_count
-            pullup_calories = pullup_calories+pullup_calorie
-            calories = calories + pullup_calories
-
-            with placeholder.container():
-                kpi1, kpi2 = st.columns(2)
-            # fill in those three columns with respective metrics or KPIs
-                kpi1.metric(
-                    label="Pullups",
-                    value=round(pullup_counts, 2),
-                    delta=round(pullup_counts)+1,
-                    )
-
-                kpi2.metric(
-                    label="Pullups Calories",
-                    value=int(pullup_calories),
-                    delta= pullup_calories,
-                    )
-            status_text.title("Calories Burned %s" %calories)
-    if exercise == "Pushup":
-        pushup_calorie,pushup_count = pushup(FRAME_WINDOW,status_text)
-        pushup_counts = pushup_counts + pushup_count
-        pushup_calories = pushup_calories + pushup_calorie
-        calories = calories + pushup_calories
-        with placeholder.container():
-                kpi1, kpi2 = st.columns(2)
-            # fill in those three columns with respective metrics or KPIs
-                kpi1.metric(
-                    label="Pushups",
-                    value=round(pushup_counts, 2),
-                    delta=round(pushup_counts)+1,
-                    )
-
-                kpi2.metric(
-                    label="Pullups Calories",
-                    value=int(pushup_calories),
-                    delta= pullup_calories,
-                    )
-        status_text.title("Calories Burned %s" %calories)
-        
-    if exercise == "Squat":
-        squat_calorie,squat_count = squats(1000, FRAME_WINDOW,status_text)
-        squat_counts = squat_counts + squat_count
-        squat_calories = squat_calories + squat_calorie
-        calories = calories + squat_calories
-        with placeholder.container():
-                kpi1, kpi2 = st.columns(2)
-            # fill in those three columns with respective metrics or KPIs
-                kpi1.metric(
-                    label="Squats",
-                    value=round(squat_counts, 2),
-                    delta=round(squat_counts)+1,
-                    )
-
-                kpi2.metric(
-                    label="Squats Calories",
-                    value=int(squat_calories),
-                    delta= squat_calories,
-                    )
-        status_text.title("Calories Burned %s" %calories)
-
-    if exercise == "Weight Lifting":
-        weightlift_calorie,weightlift_count = biceps(1000, FRAME_WINDOW,status_text)
-        weightlift_counts = weightlift_counts + weightlift_count
-        weightlift_calories = weightlift_calories + weightlift_calorie
-        calories = calories+weightlift_calories
-        with placeholder.container():
-                kpi1, kpi2 = st.columns(2)
-            # fill in those three columns with respective metrics or KPIs
-                kpi1.metric(
-                    label="Weight Lifting",
-                    value=round(weightlift_counts, 2),
-                    delta=round(weightlift_counts)+1,
-                    )
-
-                kpi2.metric(
-                    label="Weight Lifting Calories",
-                    value=int(weightlift_calories))
-        status_text.title("Calories Burned %s" %calories)
-        
+            img1,lmList = img_fun(img)
+            
+            # Right Arm
+            angle = detector.findAngle(img1, 12, 14, 16)
+            # # Left Arm
+            angle = detector.findAngle(img1, 11, 13, 15)
+            per = np.interp(angle, (210, 310), (0, 100))
+            bar = np.interp(angle, (220, 310), (650, 100))
+            img, curl_count = exercise_counts(img, per, bar)
+            FRAME_WINDOW.image(img)
+            dashboard(curl_count,calories,"Curl Count","Calories Burned")
 #status_text.title("Calories Burned %s" %calories)
 #status_text.title("No of Pullups %s" %pullup_count)
 
