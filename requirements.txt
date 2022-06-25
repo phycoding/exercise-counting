@@ -1,5 +1,5 @@
-numpy==1.19.5
-streamlit==0.84.1
+numpy
+streamlit
 opencv_python
 libgl1
-mediapipe==0.8.10
+mediapipe
