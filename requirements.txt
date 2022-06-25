@@ -1,5 +1,5 @@
 numpy==1.19.5
 streamlit==0.84.1
-opencv_python==4.5.2.54
+opencv_python__headless==4.6.0.66
 mediapipe==0.8.10
 skia-python==87.4
