@@ -96,7 +96,8 @@ def exercise_counts(img,per,bar):
 # create three columns
 placeholder = st.empty()
 def dashboard(count,calories,label1,label2):
-    with placeholder.container():
+    with placeholder:
+        st.container():
                 kpi1, kpi2 = st.columns(2)
             # fill in those three columns with respective metrics or KPIs
                 kpi1.metric(
