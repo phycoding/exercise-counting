@@ -1,8 +1,5 @@
-from turtle import width
-from push_up import pushup
-from pull_up import pullup
-from squats import squats
-from weight_lifting import biceps
+
+
 import streamlit as st 
 import cv2
 import mediapipe as mp
